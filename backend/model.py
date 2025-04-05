@@ -27,11 +27,9 @@ def get_user_collection():
     """Return the user collection """
     from app import mongo_db
     return mongo_db["users"]
-
-def get_emotion_history(): 
-    """Return the emotion history collection"""
-    from model import get_emotion_history
-    return mongo.db.emotion_history
+def get_emotion_history():
+    from app import mongo_db
+    return mongo_db["emotion_history"]
 
 def create_user(username, email,password_hash): 
     """Insert a new user into the users collection"""
