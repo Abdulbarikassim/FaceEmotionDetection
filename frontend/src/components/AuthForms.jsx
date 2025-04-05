@@ -24,6 +24,12 @@ const AuthForm = ({ isOpen, onClose, onSuccess, type }) => {
       } else {
         await signInUser({ email, password });
       }
+
+      // Clear form fields after successful authentication
+      setName("");
+      setEmail("");
+      setPassword("");
+
       onSuccess();
       onClose();
     } catch (err) {

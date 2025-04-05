@@ -1,21 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Zap, LogIn, UserPlus, LogOut, History } from "lucide-react";
 import { logoutUser } from "../api/api";
 import AuthForm from "../components/AuthForms";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [error, setError] = useState(null);
 
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if the user is logged in on page load by checking localStorage
+    const loggedIn = localStorage.getItem("isLoggedIn");
+    if (loggedIn === "true") {
+      setIsLoggedIn(true);
+    }
+  }, [setIsLoggedIn]);
+
   const handleLogout = async () => {
     try {
       await logoutUser();
       setIsLoggedIn(false);
+      localStorage.removeItem("isLoggedIn");
+      navigate("/");
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  const handleSignInSuccess = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem("isLoggedIn", "true");
+  };
+
+  const handleSignUpSuccess = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem("isLoggedIn", "true");
   };
 
   return (
@@ -62,10 +85,13 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
               </>
             ) : (
               <div className="flex items-center space-x-4">
-                <button className="flex items-center space-x-1 text-gray-700 hover:text-purple-600">
+                <Link
+                  to="/history"
+                  className="flex items-center space-x-1 text-gray-700 hover:text-purple-600"
+                >
                   <History className="h-5 w-5" />
                   <span>History</span>
-                </button>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-1 text-gray-700 hover:text-purple-600"
@@ -82,14 +108,14 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
       <AuthForm
         isOpen={showSignIn}
         onClose={() => setShowSignIn(false)}
-        onSuccess={() => setIsLoggedIn(true)}
+        onSuccess={handleSignInSuccess}
         type="signin"
       />
 
       <AuthForm
         isOpen={showSignUp}
         onClose={() => setShowSignUp(false)}
-        onSuccess={() => setIsLoggedIn(true)}
+        onSuccess={handleSignUpSuccess}
         type="signup"
       />
 
