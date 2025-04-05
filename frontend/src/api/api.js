@@ -33,7 +33,7 @@ export async function saveEmotionResult(imageData, emotion) {
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/save`, {
+    const response = await fetch(`${BASE_URL}/api/save`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -61,7 +61,7 @@ export async function getEmotionHistory() {
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/history`, {
+    const response = await fetch(`${BASE_URL}/api/history`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
