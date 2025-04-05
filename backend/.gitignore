@@ -3,3 +3,4 @@ backend/__pycache__
 backend/routes/__pycache__
 venv 
 backend/detection/__pycache__
+.DS_Store
