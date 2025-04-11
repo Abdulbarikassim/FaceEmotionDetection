@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, unset_jwt_cookies
 from werkzeug.security import generate_password_hash, check_password_hash
 from model import create_user, find_user_by_username, find_user_by_email
+from datetime import timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -30,6 +31,7 @@ def register():
         return jsonify({"error": "An error occurred during registration"}), 500
 
     return jsonify({"message": "User registered successfully"}), 201
+
 @auth_bp.route('/signin', methods=['POST'])
 def login():
     email = request.json.get('email', None)
@@ -42,7 +44,10 @@ def login():
     if not user or not check_password_hash(user["hashed_password"], password):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    access_token = create_access_token(identity=str(user["_id"]))
+    access_token = create_access_token(
+        identity=str(user["_id"]),
+        expires_delta=timedelta(days=3)
+    )
     return jsonify({
         "message": "Login successful",
         "access_token": access_token

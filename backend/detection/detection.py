@@ -4,6 +4,8 @@ import tensorflow as tf
 from PIL import Image
 from io import BytesIO
 import base64
+import cv2
+import io
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -35,17 +37,32 @@ def load_model():
 
 load_model()
 
-# Preprocess function
+# Load OpenCV's pre-trained face detector
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
 def preprocess(image_bytes):
     try:
-        image = Image.open(BytesIO(image_bytes))
-        if image.mode != 'L':
-            image = image.convert('L')
-        image = image.resize((48, 48))
-        img_array = np.array(image) / 255.0
-        img_array = np.expand_dims(img_array, axis=-1)
-        img_array = np.expand_dims(img_array, axis=0)
-        return img_array
+        # Read image as OpenCV BGR format
+        image_array = np.asarray(bytearray(image_bytes), dtype=np.uint8)
+        img = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Detect faces
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+
+        if len(faces) == 0:
+            print("No face detected.")
+            return None
+
+        # Crop the first detected face
+        x, y, w, h = faces[0]
+        face = gray[y:y+h, x:x+w]
+        face_resized = cv2.resize(face, (48, 48)) / 255.0
+        face_resized = np.expand_dims(face_resized, axis=-1)
+        face_resized = np.expand_dims(face_resized, axis=0)
+
+        return face_resized
     except Exception as e:
         print(f"Error preprocessing image: {str(e)}")
         return None
@@ -118,8 +135,29 @@ def history():
 
     user_history = history.find({"user_id": ObjectId(user_id)})
     history_list = [
-        {"image_base64": record["image_base64"], "emotion": record["detected_emotion"]}
+        {
+            "_id": str(record["_id"]),
+            "image_base64": record["image_base64"],
+            "emotion": record["detected_emotion"]
+        }
         for record in user_history
     ]
     
     return jsonify(history_list), 200
+
+# Delete Emotion History by ID
+@detection_bp.route('/history/<emotion_id>', methods=['DELETE'])
+@jwt_required()
+def delete_emotion(emotion_id):
+    user_id = get_jwt_identity()
+    history = get_emotion_history()
+
+    result = history.delete_one({
+        "_id": ObjectId(emotion_id),
+        "user_id": ObjectId(user_id)
+    })
+
+    if result.deleted_count == 0:
+        return jsonify({"error": "Emotion not found or not authorized"}), 404
+
+    return jsonify({"message": "Emotion deleted successfully"}), 200
