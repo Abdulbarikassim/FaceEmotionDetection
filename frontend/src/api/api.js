@@ -1,5 +1,11 @@
 const BASE_URL = "http://localhost:3000";
 
+// Function to handle token expiration and redirect to sign-in
+function handleTokenExpiration() {
+  localStorage.removeItem("authToken");
+  window.location.href = "/signin"; // Redirect to the sign-in page
+}
+
 // Emotion detection
 export async function getEmotionPrediction(imageData) {
   const token = localStorage.getItem("authToken");
@@ -17,7 +23,12 @@ export async function getEmotionPrediction(imageData) {
       body: JSON.stringify({ image_base64: imageData.split(",")[1] }),
     });
 
-    if (!response.ok) throw new Error("Failed to fetch prediction");
+    if (!response.ok) {
+      if (response.status === 401) {
+        handleTokenExpiration();
+      }
+      throw new Error("Failed to fetch prediction");
+    }
     return await response.json();
   } catch (error) {
     console.error("Error fetching emotion prediction:", error);
@@ -45,7 +56,12 @@ export async function saveEmotionResult(imageData, emotion) {
       }),
     });
 
-    if (!response.ok) throw new Error("Failed to save emotion");
+    if (!response.ok) {
+      if (response.status === 401) {
+        handleTokenExpiration();
+      }
+      throw new Error("Failed to save emotion");
+    }
     return await response.json();
   } catch (error) {
     console.error("Error saving emotion:", error);
@@ -67,10 +83,43 @@ export async function getEmotionHistory() {
       },
     });
 
-    if (!response.ok) throw new Error("Failed to fetch history");
+    if (!response.ok) {
+      if (response.status === 401) {
+        handleTokenExpiration();
+      }
+      throw new Error("Failed to fetch history");
+    }
     return await response.json();
   } catch (error) {
     console.error("Error fetching emotion history:", error);
+    throw error;
+  }
+}
+
+// Delete emotion history item
+export async function deleteEmotionById(emotionId) {
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/history/${emotionId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        handleTokenExpiration();
+      }
+      throw new Error("Failed to delete emotion");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error deleting emotion:", error);
     throw error;
   }
 }

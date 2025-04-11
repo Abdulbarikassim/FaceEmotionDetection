@@ -17,10 +17,10 @@ const About = () => {
               This Facial Emotion Recognition project utilizes deep learning
               techniques to detect and classify human emotions from facial
               expressions using the FER2013 dataset. The system is designed to
-              compare three different model architectures: a custom CNN, VGG-16,
-              and MobileNet, But Now the systems using a custom cnn with four
-              layers to detect emotions in real-time.The goal is to identify the
-              most accurate and efficient model for real-time emotion detection
+              compare three different model architectures: a custom CNN and
+              MobileNet, But Now the systems using a custom cnn with four layers
+              to detect emotions in real-time.The goal is to identify the most
+              accurate and efficient model for real-time emotion detection
               applications. The backend is powered by Flask and TensorFlow/Keras
               for inference, while the frontend uses React for a responsive user
               interface. This project also includes integration with a secure
