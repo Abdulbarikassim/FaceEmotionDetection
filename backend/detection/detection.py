@@ -175,7 +175,10 @@ def delete_emotion(emotion_id):
         return jsonify({"error": "Invalid token, please sign in again"}), 401
 
     record_id = parse_uuid(emotion_id)
-    image_path = delete_emotion_history(user_id, record_id) if record_id else None
+    if record_id is None:
+        return jsonify({"error": "Invalid emotion id"}), 400
+
+    image_path = delete_emotion_history(user_id, record_id)
 
     if image_path is None:
         return jsonify({"error": "Emotion not found or not authorized"}), 404
