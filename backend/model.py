@@ -1,81 +1,88 @@
-from flask_pymongo import PyMongo
-from bson.objectid import ObjectId
-from datetime import datetime
+import uuid
+
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
+from db import SessionLocal, User, EmotionHistory
 
 
-mongo = PyMongo()
+def parse_uuid(value):
+    """Return a UUID, or None if the value isn't a valid id (e.g. an old MongoDB token)"""
+    try:
+        return uuid.UUID(str(value))
+    except ValueError:
+        return None
 
-def init_db(app): 
-    """Initialize mongoDB with flask app """
-    mongo.init_app(app)
-    create_collection()
+def _user_to_dict(user):
+    """Return the user in the same shape the auth routes expect"""
+    if user is None:
+        return None
+    return {
+        "_id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "hashed_password": user.hashed_password,
+    }
 
-def create_collection(): 
-    """Ensuring required collections exist with indexes"""
-    db = mongo.db 
-    existing_collections = db.list_collection_names()
+def create_user(username, email, password_hash):
+    """Insert a new user into the users table"""
+    with SessionLocal() as session:
+        user = User(username=username, email=email, hashed_password=password_hash)
+        session.add(user)
+        try:
+            session.commit()
+        except IntegrityError:
+            # Username or email already taken
+            session.rollback()
+            return None
+        return str(user.id)
 
-    if "users" not in existing_collections:
-        db.create_collection("users")
-        db.users.create_index("username", unique=True)
-
-    if "emotion_history" not in existing_collections:
-        db.create_collection("emotion_history")
-        db.emotion_history.create_index("user_id")
-
-def get_user_collection(): 
-    """Return the user collection """
-    from app import mongo_db
-    return mongo_db["users"]
-def get_emotion_history():
-    from app import mongo_db
-    return mongo_db["emotion_history"]
-
-def create_user(username, email,password_hash): 
-    """Insert a new user into the users collection"""
-    users = get_user_collection()
-    
-    # Ensure unique username
-    if users.find_one({"username": username}):
-        return None 
-    
-    user_id = users.insert_one(
-        {
-            "username": username, 
-            "email" : email ,
-            "hashed_password": password_hash 
-        }
-    ).inserted_id
-    return str(user_id)
-# finding the user by username 
-
-def find_user_by_username(username): 
+# finding the user by username
+def find_user_by_username(username):
     """Find user by username"""
-    users = get_user_collection()
-    return users.find_one({"username": username})
+    with SessionLocal() as session:
+        return _user_to_dict(session.scalar(select(User).where(User.username == username)))
 
-# finding the user by email 
-def find_user_by_email(email): 
-    """Find user by username"""
-    users = get_user_collection()
-    return users.find_one({"email": email})
-def save_emotion_history(user_id, image_path, emotion): 
-    """Save detected emotion and image path for a user in emotion_history"""
-    history = get_emotion_history()
-    
-    history.insert_one({
-         # Link to user
-        "user_id": ObjectId(user_id), 
-        # Path to stored image
-        "image_path": image_path,  
-        # Recognized emotion
-        "detected_emotion": emotion,  
-        # Store time of detection
-        "timestamp": datetime.utcnow()  
-    })
+# finding the user by email
+def find_user_by_email(email):
+    """Find user by email"""
+    with SessionLocal() as session:
+        return _user_to_dict(session.scalar(select(User).where(User.email == email)))
 
-def get_user_emotion_history(user_id): 
-    """Retrieve all emotion history for a specific user"""
-    history = get_emotion_history()
-    
-    return list(history.find({"user_id": ObjectId(user_id)}))
+def save_emotion_history(user_id, emotion, image_path, image_url):
+    """Save detected emotion and the stored image for a user"""
+    with SessionLocal() as session:
+        record = EmotionHistory(
+            user_id=user_id,
+            detected_emotion=emotion,
+            image_path=image_path,
+            image_url=image_url,
+        )
+        session.add(record)
+        session.commit()
+        return str(record.id)
+
+def get_user_emotion_history(user_id):
+    """Retrieve all emotion history for a specific user, oldest first"""
+    with SessionLocal() as session:
+        return list(session.scalars(
+            select(EmotionHistory)
+            .where(EmotionHistory.user_id == user_id)
+            .order_by(EmotionHistory.created_at)
+        ))
+
+def delete_emotion_history(user_id, emotion_id):
+    """Delete one history record owned by the user; returns its image path, or None if not found"""
+    with SessionLocal() as session:
+        record = session.scalar(
+            select(EmotionHistory).where(
+                EmotionHistory.id == emotion_id,
+                EmotionHistory.user_id == user_id,
+            )
+        )
+        if record is None:
+            return None
+        image_path = record.image_path
+        session.delete(record)
+        session.commit()
+        return image_path

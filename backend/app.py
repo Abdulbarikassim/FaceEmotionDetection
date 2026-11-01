@@ -5,8 +5,8 @@ from routes import init_app
 from routes.auth import auth_bp
 from flask_cors import CORS
 from config import Config
-from pymongo import MongoClient
-import certifi
+from db import init_db
+from storage import ensure_bucket
 import numpy as np
 
 app = Flask(__name__)
@@ -18,16 +18,9 @@ app.config.from_object(Config)
 # Set up JWT authentication
 jwt = JWTManager(app)
 
-# set up mongoDB connection
-
-mongo_client = MongoClient(app.config["MONGO_URL"], tlsCAFile=certifi.where())
-mongo_db = mongo_client["EmotionAi"]
-
-# get users
-
-# get users
-user_collection = mongo_db["users"]
-emotion_history_collection = mongo_db["emotion_history"]
+# Set up Supabase: create tables (with RLS) and the image bucket if missing
+init_db()
+ensure_bucket()
 
 # Initialize routes
 init_app(app)

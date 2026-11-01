@@ -9,10 +9,10 @@ import io
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from bson.objectid import ObjectId
 
 from config import Config
-from model import get_emotion_history
+from model import parse_uuid, save_emotion_history, get_user_emotion_history, delete_emotion_history
+from storage import upload_image, delete_image
 
 detection_bp = Blueprint('detect', __name__)
 
@@ -117,18 +117,33 @@ def detect():
 @detection_bp.route('/save', methods=['POST'])
 @jwt_required()
 def save_emotion():
-    user_id = get_jwt_identity()
-    data = request.json
+    user_id = parse_uuid(get_jwt_identity())
+    if user_id is None:
+        return jsonify({"error": "Invalid token, please sign in again"}), 401
 
+    data = request.json
     if not data or "emotion" not in data or "image_base64" not in data:
         return jsonify({"error": "Invalid data"}), 400
 
-    history = get_emotion_history()
-    history.insert_one({
-        "user_id": ObjectId(user_id),
-        "detected_emotion": data["emotion"],
-        "image_base64": data["image_base64"]
-    })
+    try:
+        image_bytes = base64.b64decode(data["image_base64"])
+    except Exception as e:
+        return jsonify({"error": f"Invalid base64 encoding: {str(e)}"}), 400
+
+    # Upload the image to Supabase Storage, then save the record pointing to it
+    try:
+        image_path, image_url = upload_image(image_bytes, user_id)
+    except Exception as e:
+        print(f"Error uploading image: {str(e)}")
+        return jsonify({"error": "Could not store the image"}), 500
+
+    try:
+        save_emotion_history(user_id, data["emotion"], image_path, image_url)
+    except Exception as e:
+        # Don't leave an orphan file in the bucket
+        print(f"Error saving emotion: {str(e)}")
+        delete_image(image_path)
+        return jsonify({"error": "Could not save the emotion"}), 500
 
     return jsonify({"message": "Emotion saved successfully"}), 200
 
@@ -136,17 +151,17 @@ def save_emotion():
 @detection_bp.route('/history', methods=['GET'])
 @jwt_required()
 def history():
-    user_id = get_jwt_identity()
-    history = get_emotion_history()
+    user_id = parse_uuid(get_jwt_identity())
+    if user_id is None:
+        return jsonify({"error": "Invalid token, please sign in again"}), 401
 
-    user_history = history.find({"user_id": ObjectId(user_id)})
     history_list = [
         {
-            "_id": str(record["_id"]),
-            "image_base64": record["image_base64"],
-            "emotion": record["detected_emotion"]
+            "_id": str(record.id),
+            "image_url": record.image_url,
+            "emotion": record.detected_emotion
         }
-        for record in user_history
+        for record in get_user_emotion_history(user_id)
     ]
     
     return jsonify(history_list), 200
@@ -155,15 +170,17 @@ def history():
 @detection_bp.route('/history/<emotion_id>', methods=['DELETE'])
 @jwt_required()
 def delete_emotion(emotion_id):
-    user_id = get_jwt_identity()
-    history = get_emotion_history()
+    user_id = parse_uuid(get_jwt_identity())
+    if user_id is None:
+        return jsonify({"error": "Invalid token, please sign in again"}), 401
 
-    result = history.delete_one({
-        "_id": ObjectId(emotion_id),
-        "user_id": ObjectId(user_id)
-    })
+    record_id = parse_uuid(emotion_id)
+    image_path = delete_emotion_history(user_id, record_id) if record_id else None
 
-    if result.deleted_count == 0:
+    if image_path is None:
         return jsonify({"error": "Emotion not found or not authorized"}), 404
+
+    # Record is gone; also remove its image file from the bucket
+    delete_image(image_path)
 
     return jsonify({"message": "Emotion deleted successfully"}), 200
