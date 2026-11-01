@@ -1,4 +1,5 @@
-const BASE_URL = "http://localhost:3000";
+// Backend address: set VITE_API_URL when deployed; falls back to local backend.
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // Function to handle token expiration and redirect to sign-in
 function handleTokenExpiration() {

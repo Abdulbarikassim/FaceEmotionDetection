@@ -17,7 +17,13 @@ from model import get_emotion_history
 detection_bp = Blueprint('detect', __name__)
 
 # Model path and initialization
-MODEL_PATH = '/Users/abdulbari/Desktop/Uniwork/UG-PROJECT/FacilalRecognitionProject/webapp/backend/modelsTrained/fine_tuned_model2_ck.h5'
+# Model path: relative to this file, so it works on any machine/server.
+# Can be overridden with MODEL_PATH in .env if you want to switch models.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.getenv(
+    "MODEL_PATH",
+    os.path.join(BASE_DIR, "..", "modelsTrained", "fine_tuned_model2_ck.h5"),
+)
 model = None
 
 # Emotion labels

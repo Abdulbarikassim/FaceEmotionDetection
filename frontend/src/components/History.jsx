@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getEmotionHistory, deleteEmotionById } from "../api/api";
-import { FaRegSmile } from "react-icons/fa"; // Assuming you want to use a cabbage-like icon
+import { FaRegSmile } from "react-icons/fa";
 
 const History = () => {
   const [emotions, setEmotions] = useState([]);
-  const [expandedImage, setExpandedImage] = useState(null); // Track expanded image
+  const [expandedImage, setExpandedImage] = useState(null);
   const navigate = useNavigate();
 
   const handleDelete = async (id, index) => {
@@ -28,7 +28,7 @@ const History = () => {
   };
 
   const handleImageClick = (index) => {
-    setExpandedImage(expandedImage === index ? null : index); // Toggle image expansion
+    setExpandedImage(expandedImage === index ? null : index);
   };
 
   useEffect(() => {
