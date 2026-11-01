@@ -56,7 +56,7 @@ const History = () => {
           >
             <div className="flex flex-col items-center space-y-4">
               <img
-                src={`data:image/jpeg;base64,${emotion.image_base64}`}
+                src={emotion.image_url}
                 alt="Emotion"
                 className={`w-48 h-48 object-cover rounded cursor-pointer ${
                   expandedImage === index ? "w-full h-auto" : ""

@@ -36,8 +36,7 @@ const About = () => {
             <div className="text-gray-600 space-y-4">
               <p>Hi there! 👋</p>
               <p>
-                I'm <strong>@Abdulbarikassim</strong>, an aspiring backend
-                engineer and tech enthusiast with a Bachelor's degree in
+                I'm <strong>@Abdulbarikassim</strong>, an aspiring Design Enginer and tech enthusiast with a Bachelor's degree in
                 Information Technology from Middlesex University Dubai 🎓.
                 Currently in my final year, I’m exploring the depths of web
                 development, machine learning, and artificial intelligence.
