@@ -37,6 +37,8 @@ def load_model():
         return
     try:
         model = tf.keras.models.load_model(MODEL_PATH)
+        # Warm up with dummy data: builds the metrics (avoids a warning) and makes the first request fast
+        model.evaluate(np.zeros((1, 48, 48, 1)), np.zeros((1, 7)), verbose=0)
         print("Model loaded successfully")
     except Exception as e:
         print(f"Error loading the model: {str(e)}")

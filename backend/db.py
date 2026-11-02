@@ -1,6 +1,7 @@
+import ssl
 import uuid
 from datetime import datetime
-from urllib.parse import unquote, parse_qsl
+from urllib.parse import unquote
 
 from sqlalchemy import create_engine, String, Text, DateTime, ForeignKey, func, text
 from sqlalchemy.engine import URL
@@ -18,23 +19,35 @@ def build_db_url(raw_url):
     creds, _, location = rest.rpartition("@")
     username, _, password = creds.partition(":")
     hostport, _, path = location.partition("/")
-    database, _, query = path.partition("?")
+    # Query options like ?sslmode= are psycopg-specific; pg8000 takes SSL settings via connect_args
+    database = path.partition("?")[0]
     host, _, port = hostport.partition(":")
-    params = dict(parse_qsl(query))
-    params.setdefault("sslmode", "require")
     return URL.create(
-        drivername="postgresql+psycopg",
+        drivername="postgresql+pg8000",
         username=unquote(username),
         password=unquote(password),
         host=host,
         port=int(port) if port else 5432,
         database=database or "postgres",
-        query=params,
     )
 
 
+def build_ssl_context():
+    """Encrypt the connection without verifying the certificate (like sslmode=require).
+    Supabase signs its certs with its own CA, which isn't in the system trust store."""
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    return context
+
+
+# pg8000 is pure Python, so it can't clash with TensorFlow's native libraries in Docker.
 # pool_pre_ping re-checks connections, since the Supabase pooler closes idle ones
-engine = create_engine(build_db_url(Config.DATABASE_URL), pool_pre_ping=True)
+engine = create_engine(
+    build_db_url(Config.DATABASE_URL),
+    connect_args={"ssl_context": build_ssl_context()},
+    pool_pre_ping=True,
+)
 SessionLocal = sessionmaker(engine, expire_on_commit=False)
 
 

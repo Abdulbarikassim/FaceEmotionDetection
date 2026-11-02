@@ -1,13 +1,14 @@
+import os
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
-from detection.detection import load_model, model, detection_bp
+import detection.detection as detection_module
+from detection.detection import detection_bp
 from routes import init_app
 from routes.auth import auth_bp
 from flask_cors import CORS
 from config import Config
 from db import init_db
 from storage import ensure_bucket
-import numpy as np
 
 app = Flask(__name__)
 
@@ -34,15 +35,14 @@ def home():
 # Health check route
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "OK", "model_loaded": model is not None})
+    # Read through the module so this reflects the model even if it was (re)loaded later
+    return jsonify({"status": "OK", "model_loaded": detection_module.model is not None})
 
+# Local development only; in production gunicorn imports `app` directly (see Dockerfile).
+# The model is already loaded when detection.py is imported.
 if __name__ == '__main__':
-    # Load model on startup
-    load_model()
-    import numpy as np
-
-    # Build model metrics with dummy data to avoid warning
-    dummy_input = np.zeros((1, 48, 48, 1))
-    dummy_label = np.zeros((1, 7))
-    model.evaluate(dummy_input, dummy_label, verbose=0)
-    app.run(debug=True, host='0.0.0.0', port=3000)
+    app.run(
+        debug=os.getenv("FLASK_DEBUG") == "1",
+        host='0.0.0.0',
+        port=int(os.getenv("PORT", 3000)),
+    )
