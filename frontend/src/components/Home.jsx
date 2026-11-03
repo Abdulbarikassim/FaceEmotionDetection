@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Camera, RotateCcw, Save } from "lucide-react";
 import { saveEmotionResult } from "../api/api";
-import { detectEmotion, preloadModels } from "../emotion/detector";
+// TensorFlow.js and MediaPipe are large, so load them in a separate chunk after the page shows
+const loadDetector = () => import("../emotion/detector");
 
 const Home = () => {
   const [emotion, setEmotion] = useState(null);
@@ -58,6 +59,7 @@ const Home = () => {
     if (imageData) {
       try {
         // Runs in the browser; no image is sent to the server for detection
+        const { detectEmotion } = await loadDetector();
         const result = await detectEmotion(canvasRef.current);
         setEmotion(result.emotion);
         setConfidence(result.confidence);
@@ -97,7 +99,8 @@ const Home = () => {
   useEffect(() => {
     startCamera();
     // Download the face and emotion models while the camera starts
-    preloadModels()
+    loadDetector()
+      .then(({ preloadModels }) => preloadModels())
       .then(() => setModelsReady(true))
       .catch((err) => {
         setError("Could not load the emotion model. Please refresh the page.");

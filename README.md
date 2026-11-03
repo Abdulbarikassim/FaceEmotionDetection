@@ -3,7 +3,7 @@
 A full-stack web app that recognises facial emotions from your webcam. It finds your face, predicts one of seven emotions, and lets you save results to a personal history.
 
 **Live demo:** https://face-emotion-detection-dusky.vercel.app/
-> The backend runs on a free plan and sleeps when nobody uses it, so the first sign-in after a quiet period can take up to a minute.
+> The backend runs on a free plan and sleeps when nobody uses it, so the first sign-in after a quiet period can take up to a minute. The free Supabase database also pauses after about a week without activity.
 
 ## Features
 
@@ -138,3 +138,7 @@ The notebooks compare several approaches to emotion classification:
 ## Author
 
 **Abdulbari Kassim**, software engineer with a strong interest in design. [LinkedIn](https://www.linkedin.com/in/abdulbari-kassim-a86726300/) · [GitHub](https://github.com/Abdulbarikassim)
+
+## License
+
+[MIT](LICENSE)

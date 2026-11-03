@@ -43,8 +43,8 @@ const About = () => {
               <p>Hi there! 👋</p>
               <p>
                 I'm <strong>@Abdulbarikassim</strong>, a software engineer who
-                is really interested in design. I studied Information
-                Technology at Middlesex University Dubai 🎓, and I love
+                is really interested in design. I'm an Information Technology
+                graduate from Middlesex University Dubai 🎓, and I love
                 building products that are well engineered underneath and
                 feel good to use. I can engineer the system and design the
                 experience, and I'm always learning more about both.
