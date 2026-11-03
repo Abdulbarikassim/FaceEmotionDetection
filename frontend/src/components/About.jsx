@@ -13,20 +13,26 @@ const About = () => {
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               About the Project
             </h2>
-            <p className="text-gray-600">
-              This Facial Emotion Recognition project utilizes deep learning
-              techniques to detect and classify human emotions from facial
-              expressions using the FER2013 dataset. The system is designed to
-              compare three different model architectures: a custom CNN and
-              MobileNet, But Now the systems using a custom cnn with four layers
-              to detect emotions in real-time.The goal is to identify the most
-              accurate and efficient model for real-time emotion detection
-              applications. The backend is powered by Flask and TensorFlow/Keras
-              for inference, while the frontend uses React for a responsive user
-              interface. This project also includes integration with a secure
-              authentication system, making it suitable for deployment in
-              real-world scenarios.
-            </p>
+            <div className="text-gray-600 space-y-4">
+              <p>
+                Emotion AI recognises facial expressions from your webcam and
+                classifies them into seven emotions: angry, disgust, fear,
+                happy, sad, surprise and neutral. I trained and compared
+                several models on the FER2013 dataset, including MobileNetV2,
+                MobileNetV3 and a custom convolutional neural network. The
+                custom CNN gave the best balance of accuracy and speed, so it
+                powers the app.
+              </p>
+              <p>
+                The model runs directly in your browser with TensorFlow.js,
+                and MediaPipe finds your face first. That makes results
+                instant, and your photo only leaves your device when you
+                choose to save it. A Flask backend handles secure sign-in and
+                your saved history, which is stored in Supabase (PostgreSQL
+                and file storage). The React frontend is hosted on Vercel and
+                the API on Render.
+              </p>
+            </div>
           </section>
 
           <section>
@@ -36,38 +42,40 @@ const About = () => {
             <div className="text-gray-600 space-y-4">
               <p>Hi there! 👋</p>
               <p>
-                I'm <strong>@Abdulbarikassim</strong>, an aspiring Design Enginer and tech enthusiast with a Bachelor's degree in
-                Information Technology from Middlesex University Dubai 🎓.
-                Currently in my final year, I’m exploring the depths of web
-                development, machine learning, and artificial intelligence.
+                I'm <strong>@Abdulbarikassim</strong>, a software engineer who
+                is really interested in design. I studied Information
+                Technology at Middlesex University Dubai 🎓, and I love
+                building products that are well engineered underneath and
+                feel good to use. I can engineer the system and design the
+                experience, and I'm always learning more about both.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-700 mt-6">
-                🌟 About Me
+                🌟 What I do
               </h3>
               <ul className="list-disc list-inside space-y-1">
                 <li>
-                  🔧 Proficient in <strong>Node.js</strong>,{" "}
-                  <strong>MongoDB</strong>, <strong>Express.js</strong>,{" "}
-                  <strong>C++</strong>, and <strong>Python</strong>.
+                  🎨 Design and build user experiences that are clear, simple
+                  and enjoyable, from the first idea to the live product.
                 </li>
                 <li>
-                  🤖 Passionate about <strong>machine learning</strong> and
-                  recently built a handwritten digit recognition model using{" "}
-                  <strong>NumPy</strong> from scratch.
+                  🔧 Build full-stack apps with <strong>React</strong>,{" "}
+                  <strong>Vue.js</strong>, <strong>Flask</strong> and{" "}
+                  <strong>Node.js</strong>, including RESTful APIs and
+                  authentication.
                 </li>
                 <li>
-                  🌐 Experienced with <strong>Vue.js</strong> and{" "}
-                  <strong>React.js</strong> for frontend development and
-                  building RESTful APIs.
+                  🤖 Work with <strong>machine learning</strong>: I trained the
+                  model behind this app and built a handwritten digit
+                  recognition model from scratch with <strong>NumPy</strong>.
                 </li>
                 <li>
-                  🚀 Currently working on exciting projects, including
-                  AI-powered solutions for industries like ENOC.
+                  🚀 Take projects all the way to production, like this one,
+                  which is deployed on Vercel, Render and Supabase.
                 </li>
                 <li>
-                  💻 Eager to contribute to open-source projects and collaborate
-                  on impactful tech innovations.
+                  📚 Keep learning, especially in design, and enjoy
+                  collaborating on impactful projects.
                 </li>
               </ul>
 
@@ -79,25 +87,35 @@ const About = () => {
                   <strong>Languages:</strong> Python, JavaScript, SQL, C++
                 </li>
                 <li>
-                  <strong>Frameworks:</strong> Express.js, Vue.js, Flask, Django
+                  <strong>Frontend:</strong> React, Vue.js, Tailwind CSS
                 </li>
                 <li>
-                  <strong>Databases:</strong> MongoDB (Atlas)
+                  <strong>Backend:</strong> Flask, Django, Express.js, Node.js
                 </li>
                 <li>
-                  <strong>Tools:</strong> Git, Docker, VS Code
+                  <strong>Databases:</strong> PostgreSQL (Supabase), MongoDB
                 </li>
                 <li>
-                  <strong>Concepts:</strong> Neural Networks, Backend
-                  Development, API Design, Middleware, Routing, and Deep
-                  Learning
+                  <strong>Machine learning:</strong> TensorFlow, Keras,
+                  TensorFlow.js, neural networks, deep learning
+                </li>
+                <li>
+                  <strong>Design:</strong> user experience, interface design,
+                  responsive layouts
+                </li>
+                <li>
+                  <strong>Tools:</strong> Git, Docker, VS Code, Vercel, Render
                 </li>
               </ul>
 
               <h3 className="text-xl font-semibold text-gray-700 mt-6">
                 🎯 Goals
               </h3>
-              <p>Transition into a backend engineer role post-graduation.</p>
+              <p>
+                Grow as a software engineer who brings engineering and design
+                together, building products that are reliable, fast and a
+                pleasure to use.
+              </p>
 
               <h3 className="text-xl font-semibold text-gray-700 mt-6">
                 📫 Let's connect!
@@ -115,7 +133,7 @@ const About = () => {
                   </a>
                 </li>
                 <li>
-                  🐦{" "}
+                  📸{" "}
                   <a
                     href="https://www.instagram.com/abdi6ari/profilecard/"
                     className="text-blue-600 hover:underline"

@@ -1,140 +1,110 @@
 # FaceEmotionDetection
 
-A full-stack facial emotion recognition project that detects emotions from uploaded face images and presents the results through a React frontend and Flask backend.
+A full-stack web app that recognises facial emotions from your webcam. It finds your face, predicts one of seven emotions, and lets you save results to a personal history.
 
-The project explores multiple deep-learning approaches for emotion classification, including MobileNet-based models and a custom CNN, and packages them into a web application with user authentication and emotion history tracking.
+**Live demo:** https://face-emotion-detection-dusky.vercel.app/
+> The backend runs on a free plan and sleeps when nobody uses it, so the first sign-in after a quiet period can take up to a minute.
 
-## Overview
+## Features
 
-This repository combines:
-- A Python/TensorFlow emotion recognition pipeline
-- A Flask API for model inference and user/auth features
-- A React + Vite frontend for interaction and visualization
-- MongoDB storage for user accounts and saved emotion history
-- Training notebooks for model experimentation
+- Webcam emotion detection: Angry, Disgust, Fear, Happy, Sad, Surprise and Neutral
+- Detection runs **in your browser**, so the camera image is only sent to the server if you choose to save it
+- Sign up and sign in with JWT authentication
+- Personal emotion history with saved snapshots, which you can delete at any time
+- Responsive interface that works on laptop and phone
 
-## Key Features
+## How it works
 
-- Face emotion classification from uploaded images
-- JWT-based authentication for signup/signin/logout
-- Emotion history saved per user
-- REST API endpoints for detection and data management
-- Multiple notebook experiments for model training and evaluation
-- Responsive frontend with a simple user interface
+```
+Browser (React + Vite, hosted on Vercel)
+ ├─ MediaPipe Face Detector   → finds the face in the webcam frame
+ └─ TensorFlow.js CNN         → 48×48 greyscale crop → one of 7 emotions
+        │
+        │  sign in / save / history (JSON + JWT)
+        ▼
+Flask API (hosted on Render)
+        │
+        ▼
+Supabase: PostgreSQL (users, history) + Storage (saved images)
+```
 
-## Tech Stack
+- **Model:** a custom convolutional neural network trained in Keras on facial expression data (FER2013), then converted to TensorFlow.js so it runs client-side. The converted model gives the same outputs as the original Keras model.
+- **Why in the browser:** running the model on the user's device keeps the backend small enough for a free host, gives instant results, and means photos never leave the device unless the user saves them.
+- **Backend:** handles only accounts and history. Images are stored in a Supabase Storage bucket, and records in PostgreSQL with row-level security enabled.
 
-### Backend
-- Python
-- Flask
-- TensorFlow / Keras
-- OpenCV
-- NumPy
-- Pillow
-- MongoDB
-- Flask-JWT-Extended
+## Tech stack
 
-### Frontend
-- React
-- Vite
-- JavaScript
-- Tailwind CSS
+| Area | Tools |
+|---|---|
+| Frontend | React, Vite, Tailwind CSS, TensorFlow.js, MediaPipe Tasks Vision |
+| Backend | Python, Flask, Flask-JWT-Extended, SQLAlchemy, gunicorn |
+| Data | Supabase (PostgreSQL + Storage) |
+| Machine learning | TensorFlow / Keras, Jupyter notebooks |
+| Hosting | Vercel (frontend), Render (backend) |
 
-## Repository Structure
+## Repository structure
 
-```bash
+```
 FaceEmotionDetection/
 ├── backend/
-│   ├── detection/
-│   │   └── detection.py
+│   ├── app.py              # Flask app, health check, startup
+│   ├── config.py           # Reads settings from environment variables
+│   ├── db.py               # Database connection and tables
+│   ├── model.py            # Database queries
+│   ├── storage.py          # Supabase Storage uploads and deletes
 │   ├── routes/
-│   │   ├── __init__.py
-│   │   └── auth.py
-│   ├── __pycache__/
-│   ├── app.py
-│   ├── config.py
-│   ├── model.py
-│   ├── modelsTrained/
-│   └── train_models/
+│   │   ├── auth.py         # Sign up, sign in, log out
+│   │   └── history.py      # Save, list and delete emotion history
+│   ├── modelsTrained/      # Original Keras models
+│   └── requirements.txt
 ├── frontend/
-│   ├── public/
-│   ├── src/
-│   ├── .gitignore
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── README.md
-├── custom_CovNet_fer.ipynb
-├── mobileNetV2.ipynb
-├── mobileNetV3small.ipynb
-├── .gitignore
-├── README.md
-└── .DS_Store
+│   ├── public/models/      # TensorFlow.js emotion model + face detector
+│   └── src/
+│       ├── emotion/detector.js   # Face detection + emotion prediction
+│       ├── components/           # Home, History, About, Navbar, AuthForms
+│       └── api/api.js            # Calls to the backend
+├── custom_CovNet_fer.ipynb  # Custom CNN experiments
+├── mobileNetV2.ipynb        # MobileNetV2 experiments
+└── mobileNetV3small.ipynb   # MobileNetV3Small experiments
 ```
 
-## Model and Training
+## API
 
-The project includes several experimentation notebooks:
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/auth/signup` | Create an account | No |
+| POST | `/auth/signin` | Sign in and receive a JWT | No |
+| POST | `/auth/logout` | Log out | Yes |
+| POST | `/api/save` | Save an emotion and its image | Yes |
+| GET | `/api/history` | List your saved emotions | Yes |
+| DELETE | `/api/history/<id>` | Delete a saved emotion | Yes |
+| GET | `/health` | Health check | No |
 
-- `mobileNetV2.ipynb` — MobileNetV2-based preprocessing and model workflow
-- `mobileNetV3small.ipynb` — MobileNetV3Small experimentation
-- `custom_CovNet_fer.ipynb` — custom CNN approach for FER
+## Run it locally
 
-These notebooks prepare the face data, resize it, normalize it, and train classification models on the emotion dataset used by the project.
+You need Python 3.13, Node.js and a free [Supabase](https://supabase.com) project.
 
-## Backend API
-
-The Flask backend exposes endpoints for authentication and emotion recognition.
-
-### Authentication
-- `POST /api/signup` — create a new user
-- `POST /api/signin` — sign in and receive a JWT token
-- `POST /api/logout` — invalidate session / logout
-
-### Detection
-- `POST /api/detect` — submit an image and receive the predicted emotion
-- `POST /api/save` — save detected emotion history for a user
-- `GET /api/history` — fetch user's emotion detection history
-- `DELETE /api/history/<emotion_id>` — remove a saved record
-
-## Environment Variables
-
-Create environment variables for the backend, typically in a `.env` file within `backend/`:
-
-```bash
-MONGO_URL="mongodb+srv://<username>:<password>@<cluster-url>/<database>"
-JWT_SECRET_KEY="your-secret-key"
-UPLOAD_FOLDER="/path/to/uploads"
-```
-
-## Local Setup
-
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/Abdulbarikassim/FaceEmotionDetection.git
 cd FaceEmotionDetection
 ```
 
-### 2. Set up the backend
+### 2. Backend
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install flask flask-cors flask-jwt-extended flask-pymongo pymongo python-dotenv tensorflow opencv-python pillow numpy pandas certifi
-```
-
-Then start the API:
-
-```bash
+source venv/bin/activate      # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env          # then fill in your own values
 python app.py
 ```
 
-The backend runs on `http://localhost:3000` by default.
+The API runs on `http://localhost:3000`. On first start it creates the database tables and the storage bucket.
 
-### 3. Set up the frontend
+### 3. Frontend
 
 ```bash
 cd frontend
@@ -142,33 +112,29 @@ npm install
 npm run dev
 ```
 
-The frontend is served with Vite and usually runs on:
+Open `http://localhost:5173`. To point the frontend at another backend, copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_URL`.
 
-```bash
-http://localhost:5173
-```
+## Deployment
 
-## Usage
+- **Backend (Render, free web service):** root directory `backend`, build `pip install -r requirements.txt`, start `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`. Set the variables from `backend/.env.example` in the Render dashboard.
+- **Frontend (Vercel):** root directory `frontend`, framework Vite, with `VITE_API_URL` set to the Render URL.
 
-1. Start the backend server.
-2. Start the frontend development server.
-3. Sign up or sign in.
-4. Upload a face image or use the detection flow.
-5. View the detected emotion and saved history.
+Secrets live only in the hosting dashboards and a local `.env` file, which is never committed.
 
-## Notes
+## Model experiments
 
-- The application is designed for experimentation and academic/demo use.
-- Model files are expected to be located in the backend model directories as part of the trained pipeline.
-- MongoDB connectivity and environment variables must be configured before running the app in a real environment.
+The notebooks compare several approaches to emotion classification:
 
-## Future Improvements
+- `custom_CovNet_fer.ipynb`: custom CNN (the model used in the app)
+- `mobileNetV2.ipynb`: MobileNetV2 transfer learning
+- `mobileNetV3small.ipynb`: MobileNetV3Small transfer learning
 
-- Add real-time webcam detection
-- Improve model accuracy with more balanced training data
-- Add visualization charts for emotion history
-- Introduce deployment-ready configuration for Docker or cloud hosting
+## Future improvements
 
-## Project Status
+- Charts that show emotion trends over time
+- Better accuracy on under-represented emotions such as Disgust and Fear
+- Live, continuous detection instead of single captures
 
-This project is an active prototype that demonstrates emotion recognition using deep learning and a web-based interface.
+## Author
+
+**Abdulbari Kassim**, software engineer with a strong interest in design. [LinkedIn](https://www.linkedin.com/in/abdulbari-kassim-a86726300/) · [GitHub](https://github.com/Abdulbarikassim)
