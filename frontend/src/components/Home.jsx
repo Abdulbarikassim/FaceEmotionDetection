@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Camera, RotateCcw, Save } from "lucide-react";
-import { getEmotionPrediction, saveEmotionResult } from "../api/api";
+import { saveEmotionResult } from "../api/api";
+import { detectEmotion, preloadModels } from "../emotion/detector";
 
 const Home = () => {
   const [emotion, setEmotion] = useState(null);
@@ -8,6 +9,7 @@ const Home = () => {
   const [capturedImage, setCapturedImage] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [modelsReady, setModelsReady] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -55,7 +57,8 @@ const Home = () => {
 
     if (imageData) {
       try {
-        const result = await getEmotionPrediction(imageData);
+        // Runs in the browser; no image is sent to the server for detection
+        const result = await detectEmotion(canvasRef.current);
         setEmotion(result.emotion);
         setConfidence(result.confidence);
       } catch (error) {
@@ -93,6 +96,13 @@ const Home = () => {
 
   useEffect(() => {
     startCamera();
+    // Download the face and emotion models while the camera starts
+    preloadModels()
+      .then(() => setModelsReady(true))
+      .catch((err) => {
+        setError("Could not load the emotion model. Please refresh the page.");
+        console.error("Error loading models:", err);
+      });
     return () => {
       stopCamera();
     };
@@ -129,11 +139,13 @@ const Home = () => {
           <div className="mt-6 flex flex-wrap justify-center gap-4">
             <button
               onClick={captureEmotion}
-              disabled={!!capturedImage || loading}
+              disabled={!!capturedImage || loading || !modelsReady}
               className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Camera className="h-5 w-5" />
-              <span>{loading ? "Processing..." : "Capture Emotion"}</span>
+              <span>
+                {!modelsReady ? "Loading model..." : loading ? "Processing..." : "Capture Emotion"}
+              </span>
             </button>
 
             <button

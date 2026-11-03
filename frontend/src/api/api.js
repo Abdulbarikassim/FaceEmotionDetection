@@ -7,35 +7,7 @@ function handleTokenExpiration() {
   window.location.href = "/signin"; // Redirect to the sign-in page
 }
 
-// Emotion detection
-export async function getEmotionPrediction(imageData) {
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    throw new Error("Authentication required, sign up first! ");
-  }
-
-  try {
-    const response = await fetch(`${BASE_URL}/api/detect`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ image_base64: imageData.split(",")[1] }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        handleTokenExpiration();
-      }
-      throw new Error("Failed to fetch prediction");
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching emotion prediction:", error);
-    throw error;
-  }
-}
+// Emotion detection runs in the browser (see src/emotion/detector.js)
 
 // Save emotion result
 export async function saveEmotionResult(imageData, emotion) {
